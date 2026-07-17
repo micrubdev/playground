@@ -64,6 +64,17 @@ Entry-point side effects are guarded with `import.meta.main`, which is true unde
 `node src/index.ts` and false under Vitest. That keeps importing a module from a
 test free of side effects — worth preserving if you add more entry points.
 
+## CI
+
+`.github/workflows/ci.yml` runs `npm ci && npm run check` on pushes to `main`
+and on every pull request. It is the same `check` the pre-commit hook runs, so
+CI failing on a commit that passed locally means a version drift, not a rule
+difference.
+
+The Node version comes from `.nvmrc` (currently `26`), which is a major-version
+floor rather than a pin — CI resolves it to the latest 26.x, so it can be ahead
+of your local Node. Change `.nvmrc` to move both.
+
 ## Pre-commit hook
 
 Husky runs `.husky/pre-commit` on every commit: lint-staged (Prettier on staged
