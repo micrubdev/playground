@@ -7,8 +7,9 @@ A TypeScript scratch space. Source lives in `src/`.
 ## Commands
 
 ```bash
-npm run check      # lint + typecheck + test (run this before calling work done)
+npm run check      # format + lint + typecheck + test (run this before calling work done)
 npm start          # run src/index.ts
+npm run format     # prettier --write .
 npm run lint       # eslint .
 npm run lint:fix   # eslint . --fix
 npm run typecheck  # tsc --noEmit
@@ -34,9 +35,9 @@ enums. `typecheck` enforces this, so violations fail there rather than at runtim
 Relative imports must carry the literal `.ts` extension:
 
 ```ts
-import { greet } from "./index.ts";   // works
-import { greet } from "./index.js";   // passes typecheck, ERR_MODULE_NOT_FOUND at runtime
-import { greet } from "./index";      // caught by typecheck (TS2835)
+import { greet } from "./index.ts"; // works
+import { greet } from "./index.js"; // passes typecheck, ERR_MODULE_NOT_FOUND at runtime
+import { greet } from "./index"; // caught by typecheck (TS2835)
 ```
 
 The `.js` form is the trap. It is the usual TypeScript convention under
@@ -62,6 +63,19 @@ see it, or you will think logging is broken.
 Entry-point side effects are guarded with `import.meta.main`, which is true under
 `node src/index.ts` and false under Vitest. That keeps importing a module from a
 test free of side effects — worth preserving if you add more entry points.
+
+## Formatting
+
+Prettier, all defaults (`.prettierrc.json` is deliberately `{}`). Run
+`npm run format`; `npm run check` fails on unformatted files.
+
+There is no `eslint-config-prettier`, and it is not an oversight — ESLint 10 ships
+no formatting rules and `recommendedTypeChecked` enables none, so the two tools
+do not overlap and there is nothing to turn off. Adding stylistic ESLint rules
+later would change that.
+
+Prettier reformats code blocks inside markdown, so hand-aligned comments in
+fenced examples get collapsed. Don't fight it.
 
 ## Lint
 
