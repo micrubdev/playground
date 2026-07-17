@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>playground — a TypeScript scratch space</title>
+    <meta
+      name="description"
+      content="A TypeScript scratch space that runs .ts directly on Node, with no build step."
+    />
+    <style>
+      :root {
+        --bg: #fdfdfc;
+        --fg: #1a1a18;
+        --muted: #6b6b66;
+        --line: #e4e4e0;
+        --accent: #b4522d;
+        --code-bg: #f4f4f1;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #16161a;
+          --fg: #e8e8e4;
+          --muted: #9a9a94;
+          --line: #2c2c33;
+          --accent: #e08a63;
+          --code-bg: #202027;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 4rem 1.5rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.65 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      main {
+        max-width: 44rem;
+        margin: 0 auto;
+      }
+
+      h1 {
+        margin: 0 0 0.4rem;
+        font-size: clamp(2rem, 6vw, 2.75rem);
+        letter-spacing: -0.02em;
+      }
+
+      .tagline {
+        margin: 0 0 2.5rem;
+        color: var(--muted);
+        font-size: 1.15rem;
+      }
+
+      h2 {
+        margin: 2.5rem 0 0.75rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0 0 1rem;
+      }
+
+      code {
+        background: var(--code-bg);
+        padding: 0.15em 0.4em;
+        border-radius: 4px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+      }
+
+      pre {
+        background: var(--code-bg);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem 1.15rem;
+        overflow-x: auto;
+      }
+
+      pre code {
+        background: none;
+        padding: 0;
+        font-size: 0.875rem;
+        line-height: 1.7;
+      }
+
+      .comment {
+        color: var(--muted);
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      footer {
+        margin-top: 3.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      footer a {
+        margin-right: 1.25rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>playground</h1>
+      <p class="tagline">A TypeScript scratch space with no build step.</p>
+
+      <p>
+        Node runs <code>.ts</code> files directly via type stripping — no
+        bundler, no <code>tsx</code>, no compile output. TypeScript is here to
+        type-check, not to build.
+      </p>
+
+      <h2>Try it</h2>
+      <pre><code>git clone https://github.com/micrubdev/playground.git
+cd playground
+npm install
+npm start        <span class="comment"># runs src/index.ts directly</span></code></pre>
+
+      <h2>What's inside</h2>
+      <p>
+        Vitest for tests, type-aware ESLint, Prettier, a Husky pre-commit hook,
+        and CI — all gated behind one <code>npm run check</code>. The tradeoffs
+        behind each choice are written up in
+        <a href="https://github.com/micrubdev/playground/blob/main/CLAUDE.md"
+          >CLAUDE.md</a
+        >.
+      </p>
+
+      <footer>
+        <a href="https://github.com/micrubdev/playground">Source</a>
+        <a href="https://github.com/micrubdev/playground/actions">CI</a>
+      </footer>
+    </main>
+  </body>
+</html>
