@@ -64,6 +64,20 @@ Entry-point side effects are guarded with `import.meta.main`, which is true unde
 `node src/index.ts` and false under Vitest. That keeps importing a module from a
 test free of side effects — worth preserving if you add more entry points.
 
+## Pre-commit hook
+
+Husky runs `.husky/pre-commit` on every commit: lint-staged (Prettier on staged
+files), then `lint`, `typecheck`, and `test` across the repo. A commit with lint
+errors or failing tests is rejected. This duplicates `npm run check`, so if
+`check` passes locally the commit will go through.
+
+lint-staged **rewrites staged files in place** and the reformatted version is
+what gets committed, so the file on disk may differ from what you wrote. That is
+expected, not a bug.
+
+Use `git commit --no-verify` to bypass when genuinely needed. `npx husky init`
+overwrites `.husky/pre-commit` with a placeholder — don't re-run it.
+
 ## Formatting
 
 Prettier, all defaults (`.prettierrc.json` is deliberately `{}`). Run
