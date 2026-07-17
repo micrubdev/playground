@@ -1,5 +1,7 @@
 # playground
 
+[![CI](https://github.com/micrubdev/playground/actions/workflows/ci.yml/badge.svg)](https://github.com/micrubdev/playground/actions/workflows/ci.yml)
+
 A TypeScript scratch space.
 
 ## Setup
