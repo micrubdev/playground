@@ -64,27 +64,39 @@ Entry-point side effects are guarded with `import.meta.main`, which is true unde
 `node src/index.ts` and false under Vitest. That keeps importing a module from a
 test free of side effects — worth preserving if you add more entry points.
 
-## Branch protection — main is not directly pushable
+## Branch protection
 
-A repository ruleset ("main protection") requires the `check` status check on
-`main`, so `git push` straight to `main` is rejected with GH013 even for the repo
-owner. **All changes go through a pull request**, and the branch must be up to
-date with `main` before merging (`strict` policy). The ruleset also blocks force
-pushes and branch deletion.
+Two rulesets guard `main`, deliberately split so the owner keeps a short loop
+while outside contributions stay gated:
+
+| Ruleset          | Rules                             | Admin bypass |
+| ---------------- | --------------------------------- | ------------ |
+| `main ci gate`   | requires `check` status, strict   | yes          |
+| `main integrity` | no force push, no branch deletion | no           |
+
+So the repo owner **can** push directly to `main`, and **cannot** force-push or
+delete it — that second one applies to everyone, with no exceptions.
+
+Note what the CI gate can and cannot do. A required status check cannot vet a
+direct push, because CI only runs once the commit is already on GitHub; before
+the bypass existed, every direct push was rejected with GH013 for a check that
+had not run and never could. The gate's real job is blocking PR merges. The thing
+actually protecting `main` from a bad direct push is the local pre-commit hook.
+
+Outside contributors have no bypass, so they get the full gate: PR, green CI, and
+branch up to date with `main` before merge.
 
 ```bash
-git checkout -b my-change
-# ...edit, commit...
-git push -u origin my-change
-gh pr create --fill && gh pr merge --squash --auto
+gh pr create --fill && gh pr merge --squash --auto   # reviews are not required
 ```
 
-Reviews are **not** required, so `--auto` merges as soon as CI is green. The
-required check is named `check`, which is the job id in `ci.yml` — renaming that
-job silently breaks the ruleset, since it waits for a check that never reports.
+The required check is named `check` — the job id in `ci.yml`. Renaming that job
+silently breaks the gate, which then waits forever for a check that never reports.
 
-The repo is public; it was private until branch protection forced the choice
-(GitHub gates rulesets on private repos behind Pro).
+To rewrite `main` history you must disable `main integrity` (PUT the full ruleset
+JSON with `"enforcement": "disabled"`; PATCH returns 404), push, then re-enable it.
+
+The repo is public because GitHub gates rulesets on private repos behind Pro.
 
 ## CI
 
