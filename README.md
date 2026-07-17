@@ -11,7 +11,9 @@ npm install
 ## Usage
 
 ```bash
+npm run check      # lint + typecheck + test
 npm start          # run src/index.ts
+npm run lint       # lint (add :fix to autofix)
 npm run typecheck  # type-check without emitting
 npm test           # run tests once (Vitest)
 npm run test:watch # run tests in watch mode

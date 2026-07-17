@@ -7,7 +7,10 @@ A TypeScript scratch space. Source lives in `src/`.
 ## Commands
 
 ```bash
+npm run check      # lint + typecheck + test (run this before calling work done)
 npm start          # run src/index.ts
+npm run lint       # eslint .
+npm run lint:fix   # eslint . --fix
 npm run typecheck  # tsc --noEmit
 npm test           # vitest run (matches src/**/*.test.ts)
 npm run test:watch # vitest in watch mode
@@ -59,6 +62,21 @@ see it, or you will think logging is broken.
 Entry-point side effects are guarded with `import.meta.main`, which is true under
 `node src/index.ts` and false under Vitest. That keeps importing a module from a
 test free of side effects — worth preserving if you add more entry points.
+
+## Lint
+
+ESLint flat config in `eslint.config.js`, using `typescript-eslint`'s
+`recommendedTypeChecked` — the rules are **type-aware**, so they catch things
+like floating promises and unsafe `any` access that syntax-only linting misses.
+The cost is that ESLint needs every linted `.ts` file to be inside the
+TypeScript project: a new `.ts` file outside `tsconfig.json`'s `include` fails
+with "was not found by the project service" rather than being skipped. Add such
+files to `include` (that is why `vitest.config.ts` is listed there).
+
+The config is `.js`, not `.ts`, on purpose. ESLint requires the `jiti` transform
+to load a TypeScript config, and that pulls a transform layer into a repo whose
+whole point is not having one. Type-checked rules are scoped to `**/*.ts`, so
+`eslint.config.js` itself is linted with the plain JS rules only.
 
 ## Types
 
