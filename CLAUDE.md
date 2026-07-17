@@ -2,35 +2,36 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-A TypeScript scratch space. Source lives in `src/`.
+A TypeScript scratch space. Source lives in `src/`; `src/index.ts` is the entry point.
+
+One idea explains most of the choices here: **Node runs `.ts` files directly via
+type stripping, so there is no build step.** No bundler, no `tsx`, no compile
+output. TypeScript is type-checking only (`noEmit`), and `npm start` hands the
+`.ts` file straight to `node`. Most surprises below follow from that.
 
 ## Commands
 
 ```bash
-npm run check      # format + lint + typecheck + test (run this before calling work done)
+npm run check      # format + lint + typecheck + test — the gate; run before calling work done
 npm start          # run src/index.ts
-npm run format     # prettier --write .
-npm run lint       # eslint .
-npm run lint:fix   # eslint . --fix
-npm run typecheck  # tsc --noEmit
-npm test           # vitest run (matches src/**/*.test.ts)
+npm test           # vitest run
 npm run test:watch # vitest in watch mode
-npx vitest run src/index.test.ts   # run a single test file
-npx vitest run -t "pattern"        # run tests matching a name
-npx vitest run --reporter=verbose  # show console output from tests
+npm run lint       # eslint . (:fix to autofix)
+npm run typecheck  # tsc --noEmit
+npm run format     # prettier --write .
+
+npx vitest run src/index.test.ts   # single test file
+npx vitest run -t "pattern"        # tests matching a name
+npx vitest run --reporter=verbose  # show console output (hidden by default)
 ```
 
-## No build step
+## What type stripping costs
 
-Node runs `.ts` files directly via type stripping, so there is no bundler, no
-`tsx`, and no compile output. TypeScript is type-checking only (`noEmit`), and
-`npm start` hands the `.ts` file straight to `node`.
-
-This has a consequence that will bite otherwise: `tsconfig.json` sets
-`erasableSyntaxOnly`, so **enums, namespaces, and parameter properties are
-unavailable** — Node erases type syntax rather than compiling it, and those
-features require real emit. Use union types or `as const` objects instead of
-enums. `typecheck` enforces this, so violations fail there rather than at runtime.
+Node erases type syntax rather than compiling it, so anything requiring real
+emit is unavailable. `tsconfig.json` sets `erasableSyntaxOnly` to enforce this:
+**no enums, namespaces, or parameter properties.** Use union types or `as const`
+objects instead of enums. Violations fail both `typecheck` (TS1294) and the
+runtime (`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`).
 
 Relative imports must carry the literal `.ts` extension:
 
@@ -40,118 +41,105 @@ import { greet } from "./index.js"; // passes typecheck, ERR_MODULE_NOT_FOUND at
 import { greet } from "./index"; // caught by typecheck (TS2835)
 ```
 
-The `.js` form is the trap. It is the usual TypeScript convention under
-`nodenext`, so it is the natural thing to write, and `typecheck` passes it
-clean — but Node resolves the real file on disk and there is no `index.js`.
-Only running the code catches it, so prefer `npm start` over `npm run typecheck`
-when verifying that imports resolve.
+The `.js` form is the trap. It is the normal TypeScript convention under
+`nodenext`, so it is the natural thing to write, and `typecheck` passes it clean —
+but Node resolves the real file on disk and no `index.js` exists. Only running the
+code catches it.
+
+Entry-point side effects are guarded with `import.meta.main` (true under `node`,
+false under Vitest), so importing a module from a test does not execute it. Worth
+preserving if you add entry points.
 
 ## Tests
 
-Vitest, configured in `vitest.config.ts`. Test files are `src/**/*.test.ts` and
-import from `vitest` explicitly — there are no globals, so `expect` and `test`
-must be imported.
+Vitest, configured in `vitest.config.ts`. Files are `src/**/*.test.ts`. There are
+no globals — import `expect` and `test` from `vitest` explicitly.
 
-Vitest transforms TypeScript with its own pipeline rather than using Node's type
-stripping, so it is not bound by `erasableSyntaxOnly` the way the runtime is. An
-enum would run under Vitest and crash under `npm start`. `typecheck` is what
-catches that gap, so run it alongside the tests.
+Vitest transforms TypeScript with its own pipeline instead of Node's type
+stripping, so **it is not bound by `erasableSyntaxOnly`**. An enum would pass
+under Vitest and crash under `npm start`. `typecheck` is the only thing spanning
+that gap; tests passing is not sufficient evidence.
 
-The default reporter **hides `console.log` output**. Use `--reporter=verbose` to
-see it, or you will think logging is broken.
+The default reporter **hides `console.log`**. Use `--reporter=verbose` before
+concluding that logging is broken.
 
-Entry-point side effects are guarded with `import.meta.main`, which is true under
-`node src/index.ts` and false under Vitest. That keeps importing a module from a
-test free of side effects — worth preserving if you add more entry points.
+## Lint
 
-## Branch protection
+ESLint flat config in `eslint.config.js`, using typescript-eslint's
+`recommendedTypeChecked`. Rules are **type-aware**, catching floating promises and
+unsafe `any` access that syntax-only linting misses.
 
-Two rulesets guard `main`, deliberately split so the owner keeps a short loop
-while outside contributions stay gated:
+The cost: every linted `.ts` file must be inside the TypeScript project. A new
+`.ts` file outside `tsconfig.json`'s `include` **fails** with "was not found by
+the project service" rather than being skipped — add it to `include`, which is why
+`vitest.config.ts` is listed there.
+
+The config is `.js`, not `.ts`, deliberately: ESLint needs the `jiti` transform to
+load a TypeScript config, which drags a transform layer into a repo whose whole
+point is not having one. Type-checked rules are scoped to `**/*.ts`, so
+`eslint.config.js` is linted with plain JS rules only.
+
+## Formatting
+
+Prettier, all defaults (`.prettierrc.json` is deliberately `{}`).
+
+There is no `eslint-config-prettier` and that is not an oversight — ESLint 10
+ships no formatting rules and `recommendedTypeChecked` enables none, so nothing
+overlaps and nothing needs disabling. Adding stylistic ESLint rules would change
+that.
+
+Prettier reformats code blocks inside markdown, so hand-aligned comments in fenced
+examples get collapsed. Don't fight it.
+
+## Enforcement
+
+The same `check` runs in three places, so a green `check` locally means the commit
+and CI will pass.
+
+**Pre-commit** (`.husky/pre-commit`): lint-staged, then `lint`, `typecheck`,
+`test`. lint-staged **rewrites staged files in place**, so what gets committed can
+differ from what you wrote — expected, not a bug. Bypass with
+`git commit --no-verify`. Do not re-run `npx husky init`; it overwrites the hook
+with a placeholder.
+
+**CI** (`.github/workflows/ci.yml`): `npm ci && npm run check` on pushes to `main`
+and every PR. The Node version comes from `.nvmrc` (`26`), which is a major-version
+floor, not a pin — CI resolves the latest 26.x and can run ahead of your local
+Node. CI failing on a commit that passed locally means version drift, not a rule
+difference.
+
+**Branch protection** — two rulesets guard `main`:
 
 | Ruleset          | Rules                             | Admin bypass |
 | ---------------- | --------------------------------- | ------------ |
-| `main ci gate`   | requires `check` status, strict   | yes          |
+| `main ci gate`   | requires `check`, strict          | yes          |
 | `main integrity` | no force push, no branch deletion | no           |
 
-So the repo owner **can** push directly to `main`, and **cannot** force-push or
-delete it — that second one applies to everyone, with no exceptions.
+You can push directly to `main`. Nobody, including admins, can force-push or
+delete it.
 
-Note what the CI gate can and cannot do. A required status check cannot vet a
-direct push, because CI only runs once the commit is already on GitHub; before
-the bypass existed, every direct push was rejected with GH013 for a check that
-had not run and never could. The gate's real job is blocking PR merges. The thing
-actually protecting `main` from a bad direct push is the local pre-commit hook.
+The bypass exists because **a required status check cannot vet a direct push** —
+CI only runs once the commit is on GitHub, so before the bypass every direct push
+was rejected (GH013) waiting on a check that had not run and never could. The
+gate's real job is blocking PR merges; the pre-commit hook is what actually
+protects `main` from a bad direct push.
 
-Outside contributors have no bypass, so they get the full gate: PR, green CI, and
-branch up to date with `main` before merge.
+Outside contributors have no bypass and get the full gate: PR, green CI, branch up
+to date with `main`.
 
 ```bash
 gh pr create --fill && gh pr merge --squash --auto   # reviews are not required
 ```
 
-The required check is named `check` — the job id in `ci.yml`. Renaming that job
-silently breaks the gate, which then waits forever for a check that never reports.
+The required check is named `check` — the job id in `ci.yml`. Rename that job and
+the gate silently waits forever for a check that never reports.
 
-To rewrite `main` history you must disable `main integrity` (PUT the full ruleset
-JSON with `"enforcement": "disabled"`; PATCH returns 404), push, then re-enable it.
+To rewrite `main` history, disable `main integrity` first (PUT the full ruleset
+JSON with `"enforcement": "disabled"` — PATCH returns 404), push, then re-enable.
 
 The repo is public because GitHub gates rulesets on private repos behind Pro.
 
-## CI
-
-`.github/workflows/ci.yml` runs `npm ci && npm run check` on pushes to `main`
-and on every pull request. It is the same `check` the pre-commit hook runs, so
-CI failing on a commit that passed locally means a version drift, not a rule
-difference.
-
-The Node version comes from `.nvmrc` (currently `26`), which is a major-version
-floor rather than a pin — CI resolves it to the latest 26.x, so it can be ahead
-of your local Node. Change `.nvmrc` to move both.
-
-## Pre-commit hook
-
-Husky runs `.husky/pre-commit` on every commit: lint-staged (Prettier on staged
-files), then `lint`, `typecheck`, and `test` across the repo. A commit with lint
-errors or failing tests is rejected. This duplicates `npm run check`, so if
-`check` passes locally the commit will go through.
-
-lint-staged **rewrites staged files in place** and the reformatted version is
-what gets committed, so the file on disk may differ from what you wrote. That is
-expected, not a bug.
-
-Use `git commit --no-verify` to bypass when genuinely needed. `npx husky init`
-overwrites `.husky/pre-commit` with a placeholder — don't re-run it.
-
-## Formatting
-
-Prettier, all defaults (`.prettierrc.json` is deliberately `{}`). Run
-`npm run format`; `npm run check` fails on unformatted files.
-
-There is no `eslint-config-prettier`, and it is not an oversight — ESLint 10 ships
-no formatting rules and `recommendedTypeChecked` enables none, so the two tools
-do not overlap and there is nothing to turn off. Adding stylistic ESLint rules
-later would change that.
-
-Prettier reformats code blocks inside markdown, so hand-aligned comments in
-fenced examples get collapsed. Don't fight it.
-
-## Lint
-
-ESLint flat config in `eslint.config.js`, using `typescript-eslint`'s
-`recommendedTypeChecked` — the rules are **type-aware**, so they catch things
-like floating promises and unsafe `any` access that syntax-only linting misses.
-The cost is that ESLint needs every linted `.ts` file to be inside the
-TypeScript project: a new `.ts` file outside `tsconfig.json`'s `include` fails
-with "was not found by the project service" rather than being skipped. Add such
-files to `include` (that is why `vitest.config.ts` is listed there).
-
-The config is `.js`, not `.ts`, on purpose. ESLint requires the `jiti` transform
-to load a TypeScript config, and that pulls a transform layer into a repo whose
-whole point is not having one. Type-checked rules are scoped to `**/*.ts`, so
-`eslint.config.js` itself is linted with the plain JS rules only.
-
 ## Types
 
-`@types/node` tracks v24 while the runtime is Node 26 — the newest published
-types. Occasional newer runtime APIs may be missing from the types.
+`@types/node` tracks v24 while the runtime is Node 26 — v24 is the newest
+published. Recent runtime APIs may be missing from the types.
