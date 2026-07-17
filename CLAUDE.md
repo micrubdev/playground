@@ -64,6 +64,28 @@ Entry-point side effects are guarded with `import.meta.main`, which is true unde
 `node src/index.ts` and false under Vitest. That keeps importing a module from a
 test free of side effects — worth preserving if you add more entry points.
 
+## Branch protection — main is not directly pushable
+
+A repository ruleset ("main protection") requires the `check` status check on
+`main`, so `git push` straight to `main` is rejected with GH013 even for the repo
+owner. **All changes go through a pull request**, and the branch must be up to
+date with `main` before merging (`strict` policy). The ruleset also blocks force
+pushes and branch deletion.
+
+```bash
+git checkout -b my-change
+# ...edit, commit...
+git push -u origin my-change
+gh pr create --fill && gh pr merge --squash --auto
+```
+
+Reviews are **not** required, so `--auto` merges as soon as CI is green. The
+required check is named `check`, which is the job id in `ci.yml` — renaming that
+job silently breaks the ruleset, since it waits for a check that never reports.
+
+The repo is public; it was private until branch protection forced the choice
+(GitHub gates rulesets on private repos behind Pro).
+
 ## CI
 
 `.github/workflows/ci.yml` runs `npm ci && npm run check` on pushes to `main`
