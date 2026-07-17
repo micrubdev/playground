@@ -11,9 +11,10 @@ npm install
 ## Usage
 
 ```bash
-npm start        # run src/index.ts
+npm start          # run src/index.ts
 npm run typecheck  # type-check without emitting
-npm test         # run node:test files (*.test.ts)
+npm test           # run tests once (Vitest)
+npm run test:watch # run tests in watch mode
 ```
 
 Node runs `.ts` files directly via type stripping, so there is no build step.

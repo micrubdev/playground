@@ -9,9 +9,11 @@ A TypeScript scratch space. Source lives in `src/`.
 ```bash
 npm start          # run src/index.ts
 npm run typecheck  # tsc --noEmit
-npm test           # node --test (matches *.test.ts)
-node --test src/foo.test.ts   # run a single test file
-node --test --test-name-pattern="pattern"   # run tests matching a name
+npm test           # vitest run (matches src/**/*.test.ts)
+npm run test:watch # vitest in watch mode
+npx vitest run src/index.test.ts   # run a single test file
+npx vitest run -t "pattern"        # run tests matching a name
+npx vitest run --reporter=verbose  # show console output from tests
 ```
 
 ## No build step
@@ -40,7 +42,23 @@ clean — but Node resolves the real file on disk and there is no `index.js`.
 Only running the code catches it, so prefer `npm start` over `npm run typecheck`
 when verifying that imports resolve.
 
-Tests use the built-in `node:test` runner, not Vitest or Jest.
+## Tests
+
+Vitest, configured in `vitest.config.ts`. Test files are `src/**/*.test.ts` and
+import from `vitest` explicitly — there are no globals, so `expect` and `test`
+must be imported.
+
+Vitest transforms TypeScript with its own pipeline rather than using Node's type
+stripping, so it is not bound by `erasableSyntaxOnly` the way the runtime is. An
+enum would run under Vitest and crash under `npm start`. `typecheck` is what
+catches that gap, so run it alongside the tests.
+
+The default reporter **hides `console.log` output**. Use `--reporter=verbose` to
+see it, or you will think logging is broken.
+
+Entry-point side effects are guarded with `import.meta.main`, which is true under
+`node src/index.ts` and false under Vitest. That keeps importing a module from a
+test free of side effects — worth preserving if you add more entry points.
 
 ## Types
 

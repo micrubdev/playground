@@ -2,4 +2,6 @@ export function greet(name: string): string {
   return `Hello, ${name}!`;
 }
 
-console.log(greet("world"));
+if (import.meta.main) {
+  console.log(greet("world"));
+}
