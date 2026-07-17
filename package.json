@@ -12,12 +12,15 @@
     "format:check": "prettier --check .",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.0.0",
     "eslint": "^10.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
     "prettier": "^3.9.5",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.64.0",
