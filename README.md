@@ -29,3 +29,5 @@ Node runs `.ts` files directly via type stripping, so there is no build step.
 TypeScript is used for type-checking only (`noEmit`), which is why `tsconfig.json`
 sets `erasableSyntaxOnly` — enums, namespaces, and parameter properties are not
 available, since Node strips types rather than compiling them.
+
+[probe](https://micrubdev.github.io/playground/definitely-not-a-real-page-xyz)
