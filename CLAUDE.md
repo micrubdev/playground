@@ -102,10 +102,25 @@ differ from what you wrote — expected, not a bug. Bypass with
 `git commit --no-verify`. Do not re-run `npx husky init`; it overwrites the hook
 with a placeholder.
 
-**CI** (`.github/workflows/ci.yml`): `npm ci && npm run check` on pushes to `main`
-and every PR. The Node version comes from `.nvmrc` (`26`), which is a major-version
-floor, not a pin — CI resolves the latest 26.x and can run ahead of your local
-Node. CI failing on a commit that passed locally means version drift, not a rule
+**CI** (`.github/workflows/ci.yml`) runs two jobs on pushes to `main`, on every
+PR, and weekly:
+
+- `check` — `npm ci && npm run check`. This is the one the ruleset requires.
+- `links` — lychee over `README.md`, `CLAUDE.md`, `docs/index.html`.
+
+`links` is a **separate job on purpose, and is not required**: link checks fail
+for reasons unrelated to your code (rate limits, a site briefly down), and a
+flaky required check would block merges of unrelated work. A broken link turns
+the PR `UNSTABLE` rather than `BLOCKED` — visible and red, still mergeable. Add
+`links` to the `main ci gate` ruleset if you want it blocking.
+
+The weekly `schedule` trigger exists because link rot needs no commit to happen,
+so push-triggered runs would never catch it. It re-runs `check` too, which
+harmlessly catches toolchain drift.
+
+The Node version comes from `.nvmrc` (`26`), which is a major-version floor, not
+a pin — CI resolves the latest 26.x and can run ahead of your local Node. CI
+failing on a commit that passed locally means version drift, not a rule
 difference.
 
 **Branch protection** — two rulesets guard `main`:
@@ -149,8 +164,9 @@ it; there is no Actions run for the deploy, so watch
 `docs/.nojekyll` disables Jekyll processing. Without it, GitHub would try to build
 the directory as a Jekyll site and ignore files beginning with `_`.
 
-`docs/index.html` is in Prettier's scope, so `check` fails if it is unformatted.
-CI does not verify the page renders — only that it is formatted.
+`docs/index.html` is in Prettier's scope, so `check` fails if it is unformatted,
+and the `links` job checks its links. Nothing verifies the page actually renders —
+a visually broken page deploys happily.
 
 ## Types
 
