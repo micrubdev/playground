@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/micrubdev/playground/actions/workflows/ci.yml/badge.svg)](https://github.com/micrubdev/playground/actions/workflows/ci.yml)
 
-A TypeScript scratch space.
+A TypeScript scratch space. → [micrubdev.github.io/playground](https://micrubdev.github.io/playground/)
 
 ## Setup
 

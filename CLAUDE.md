@@ -139,6 +139,19 @@ JSON with `"enforcement": "disabled"` — PATCH returns 404), push, then re-enab
 
 The repo is public because GitHub gates rulesets on private repos behind Pro.
 
+## GitHub Pages
+
+<https://micrubdev.github.io/playground/> serves `docs/` from `main` — plain
+static HTML, no build step and no deploy workflow. Pushing to `main` republishes
+it; there is no Actions run for the deploy, so watch
+`gh api repos/micrubdev/playground/pages -q .status` rather than `gh run list`.
+
+`docs/.nojekyll` disables Jekyll processing. Without it, GitHub would try to build
+the directory as a Jekyll site and ignore files beginning with `_`.
+
+`docs/index.html` is in Prettier's scope, so `check` fails if it is unformatted.
+CI does not verify the page renders — only that it is formatted.
+
 ## Types
 
 `@types/node` tracks v24 while the runtime is Node 26 — v24 is the newest
