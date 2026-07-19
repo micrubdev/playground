@@ -1,7 +1,6 @@
-export function greet(name: string): string {
-  return `Hello, ${name}!`;
-}
+import { build } from "./cms/build.ts";
 
 if (import.meta.main) {
-  console.log(greet("world"));
+  const files = build();
+  console.log(`Built ${files.length} pages into _site/`);
 }
