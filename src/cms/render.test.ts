@@ -42,3 +42,19 @@ test("throws when a required template is missing", () => {
     "Missing template: templates/index.html",
   );
 });
+
+test("gives list and tag pages a title for the head partial", () => {
+  const byPath = Object.fromEntries(
+    renderSite(
+      model,
+      {
+        ...templates,
+        "blog.list.html": "{{ title }}",
+        "blog.tag.html": "{{ title }}",
+      },
+      {},
+    ).map((f) => [f.path, f.html]),
+  );
+  expect(byPath["blog"]).toBe("blog");
+  expect(byPath["blog/tags/x"]).toBe("x · blog");
+});

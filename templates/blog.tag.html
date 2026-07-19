@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {{> head }}
+  </head>
+  <body>
+    <main>
+      <h1>Tag: {{ tag }}</h1>
+      <ul>
+        {{#each entries}}
+        <li><a href="{{ url }}">{{ title }}</a></li>
+        {{/each}}
+      </ul>
+    </main>
+  </body>
+</html>

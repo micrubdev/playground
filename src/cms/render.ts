@@ -52,6 +52,7 @@ function collectionOutputs(
     path: c.id,
     html: page(`${c.id}.list.html`, {
       site: model.site,
+      title: c.id,
       collection: { id: c.id },
       entries: c.entries.map(view),
     }),
@@ -62,6 +63,7 @@ function collectionOutputs(
       path: `${c.id}/tags/${tag}`,
       html: page(`${c.id}.tag.html`, {
         site: model.site,
+        title: `${tag} · ${c.id}`,
         tag,
         entries: tagged.map(view),
       }),
