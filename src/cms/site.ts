@@ -8,7 +8,6 @@ export interface SiteMeta {
 }
 
 export interface Entry {
-  collection: string;
   slug: string;
   url: string;
   data: Record<string, unknown>;
@@ -52,7 +51,6 @@ export function buildSiteModel(files: RawFile[]): SiteModel {
   const home = indexFile
     ? toEntry(indexFile, "", baseUrl)
     : {
-        collection: "",
         slug: "",
         url: `${baseUrl}/`,
         data: {},
@@ -96,7 +94,6 @@ function toEntry(file: RawFile, collection: string, baseUrl: string): Entry {
   const tags = Array.isArray(data.tags) ? data.tags.map((t) => str(t, "")) : [];
   const date = data.date == null ? undefined : str(data.date, "");
   return {
-    collection,
     slug,
     url,
     data,

@@ -53,7 +53,6 @@ function collectionOutputs(
     html: page(`${c.id}.list.html`, {
       site: model.site,
       title: c.id,
-      collection: { id: c.id },
       entries: c.entries.map(view),
     }),
   };
@@ -81,7 +80,6 @@ function view(entry: Entry): Record<string, unknown> {
   return {
     ...entry.data,
     url: entry.url,
-    slug: entry.slug,
     tags: entry.tags,
     date: entry.date,
     body: entry.bodyHtml,
