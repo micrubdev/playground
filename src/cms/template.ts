@@ -109,15 +109,10 @@ function renderNode(node: Node, ctx: Context, partials: Partials): string {
       const list = resolve(node.path, ctx);
       if (!Array.isArray(list)) return "";
       return list
-        .map((item: unknown, index) =>
+        .map((item: unknown) =>
           renderNodes(
             node.body,
-            {
-              ...ctx,
-              this: item,
-              "@index": index,
-              ...(isObject(item) ? item : {}),
-            },
+            { ...ctx, this: item, ...(isObject(item) ? item : {}) },
             partials,
           ),
         )
