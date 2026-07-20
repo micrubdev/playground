@@ -12,9 +12,12 @@
         >
         {{/each}}
       </p>
-      <nav>
-        {{#if prev}}<a href="{{ prev.url }}">← {{ prev.title }}</a>{{/if}} {{#if
-        next}}<a href="{{ next.url }}">{{ next.title }} →</a>{{/if}}
+      <nav aria-label="Post navigation">
+        {{#if prev}}<a rel="prev" href="{{ prev.url }}"
+          >← Previous: {{ prev.title }}</a
+        >{{/if}} {{#if next}}<a rel="next" href="{{ next.url }}"
+          >Next: {{ next.title }} →</a
+        >{{/if}}
       </nav>
     </main>
   </body>
