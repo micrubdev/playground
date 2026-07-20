@@ -55,9 +55,9 @@ test("passes prev/next neighbours to collection entries", () => {
       {},
     ).map((f) => [f.path, f.html]),
   );
-  // Entries are newest-first: Hello (0) then Old (1).
-  expect(byPath["blog/hello"]).toBe("N:Old");
-  expect(byPath["blog/old"]).toBe("P:Hello");
+  // Newest-first: Hello (0) then Old (1). prev = older, next = newer.
+  expect(byPath["blog/hello"]).toBe("P:Old");
+  expect(byPath["blog/old"]).toBe("N:Hello");
 });
 
 test("a middle entry gets both prev and next neighbours", () => {
@@ -78,9 +78,9 @@ test("a middle entry gets both prev and next neighbours", () => {
       {},
     ).map((f) => [f.path, f.html]),
   );
-  expect(byPath["blog/a"]).toBe("|N:B"); // newest: next only
-  expect(byPath["blog/b"]).toBe("P:A|N:C"); // middle: both
-  expect(byPath["blog/c"]).toBe("P:B|"); // oldest: prev only
+  expect(byPath["blog/a"]).toBe("P:B|"); // newest: prev (older) only
+  expect(byPath["blog/b"]).toBe("P:C|N:A"); // middle: prev=older, next=newer
+  expect(byPath["blog/c"]).toBe("|N:B"); // oldest: next (newer) only
 });
 
 test("gives list and tag pages a title for the head partial", () => {
