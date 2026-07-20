@@ -12,7 +12,8 @@ output. TypeScript is type-checking only (`noEmit`), and `npm start` hands the
 ## Commands
 
 ```bash
-npm run check      # format + lint + typecheck + test — the gate; run before calling work done
+npm run check      # format + lint + typecheck + test + build — the gate; run before calling work done
+npm run build      # render content/ + templates/ into _site/
 npm start          # run src/index.ts
 npm test           # vitest run
 npm run test:watch # vitest in watch mode
@@ -20,7 +21,7 @@ npm run lint       # eslint . (:fix to autofix)
 npm run typecheck  # tsc --noEmit
 npm run format     # prettier --write .
 
-npx vitest run src/index.test.ts   # single test file
+npx vitest run src/cms/site.test.ts # single test file
 npx vitest run -t "pattern"        # tests matching a name
 npx vitest run --reporter=verbose  # show console output (hidden by default)
 ```
@@ -93,20 +94,28 @@ examples get collapsed. Don't fight it.
 
 ## Enforcement
 
-The same `check` runs in three places, so a green `check` locally means the commit
-and CI will pass.
+The same `check` — format, lint, typecheck, test, and now `build` — runs in three
+places, so a green `check` locally means the commit and CI will pass. `build`
+adds no diff to review: `_site/` is gitignored and never committed.
 
 **Pre-commit** (`.husky/pre-commit`): lint-staged, then `lint`, `typecheck`,
-`test`. lint-staged **rewrites staged files in place**, so what gets committed can
+`test` — **not** `build` or `format:check`. So the hook stays green on a commit
+whose templates are mid-edit, and `check` is the only thing that catches a broken
+build. lint-staged **rewrites staged files in place**, so what gets committed can
 differ from what you wrote — expected, not a bug. Bypass with
 `git commit --no-verify`. Do not re-run `npx husky init`; it overwrites the hook
 with a placeholder.
 
-**CI** (`.github/workflows/ci.yml`) runs two jobs on pushes to `main`, on every
+**CI** (`.github/workflows/ci.yml`) runs three jobs on pushes to `main`, on every
 PR, and weekly:
 
-- `check` — `npm ci && npm run check`. This is the one the ruleset requires.
-- `links` — lychee over `README.md`, `CLAUDE.md`, `docs/index.html`.
+- `check` — `npm ci && npm run check`. `check` also runs `npm run build`, so a
+  broken template or unparseable content fails the required gate. This is the one
+  the ruleset requires.
+- `deploy` — builds `_site/` and deploys it to Pages. Pushes to `main` only, and
+  not a required status check.
+- `links` — builds `_site/`, then lychee over `README.md`, `CLAUDE.md`, and
+  `_site/**/*.html`.
 
 `links` is a **separate job on purpose, and is not required**: link checks fail
 for reasons unrelated to your code (rate limits, a site briefly down), and a
@@ -156,17 +165,25 @@ The repo is public because GitHub gates rulesets on private repos behind Pro.
 
 ## GitHub Pages
 
-<https://micrubdev.github.io/playground/> serves `docs/` from `main` — plain
-static HTML, no build step and no deploy workflow. Pushing to `main` republishes
-it; there is no Actions run for the deploy, so watch
-`gh api repos/micrubdev/playground/pages -q .status` rather than `gh run list`.
+<https://micrubdev.github.io/playground/> is built and deployed by the `deploy`
+job in `.github/workflows/ci.yml`. The source is `content/` (Markdown) plus
+`templates/` (`{{ }}` HTML); the zero-dependency generator in `src/cms/` renders
+it into `_site/`, which CI uploads as a Pages artifact and deploys. **`_site/` is
+gitignored and never committed** — `content/` and `templates/` are the source of
+truth, and a stale `_site/` locally means nothing.
 
-`docs/.nojekyll` disables Jekyll processing. Without it, GitHub would try to build
-the directory as a Jekyll site and ignore files beginning with `_`.
+The publish source is "GitHub Actions", set by the `actions/configure-pages` step
+rather than by hand in repo settings. Because the deploy is an Actions job, there
+IS a run per deploy — watch `gh run list` as well as
+`gh api repos/micrubdev/playground/pages -q .status`.
 
-`docs/index.html` is in Prettier's scope, so `check` fails if it is unformatted,
-and the `links` job checks its links. Nothing verifies the page actually renders —
-a visually broken page deploys happily.
+There is no `docs/` directory and no `.nojekyll`: the Pages-artifact path serves
+files as-is and never runs Jekyll.
+
+`templates/*.html` are in Prettier's scope, so `check` fails if they are
+unformatted — and Prettier will reflow tags around `{{ }}` expressions, which is
+cosmetic and safe. Nothing verifies the page actually renders; a visually broken
+page deploys happily.
 
 ## Types
 

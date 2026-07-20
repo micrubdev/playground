@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    {{> head }}
+  </head>
+  <body>
+    <main>
+      <article>{{{ body }}}</article>
+      <p>
+        {{#each tags}}<a href="{{ site.baseUrl }}/blog/tags/{{ this }}/"
+          >#{{ this }}</a
+        >
+        {{/each}}
+      </p>
+    </main>
+  </body>
+</html>

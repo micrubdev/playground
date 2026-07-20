@@ -24,10 +24,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # _site/ is gitignored, so the pages lychee checks must be built first.
+      - run: npm run build
+      # Pages link to the /playground deploy subpath (baseUrl); symlink it back
+      # to _site so lychee's --root-dir resolves those absolute links to files.
+      - run: ln -sfn . _site/playground
       - uses: lycheeverse/lychee-action@v2.9.0
         with:
-          args: --no-progress --verbose README.md CLAUDE.md docs/index.html
+          args: --no-progress --verbose --root-dir "${{ github.workspace }}/_site" README.md CLAUDE.md "_site/**/*.html"
           fail: true
         env:
           # Authenticates github.com requests so they are not rate limited.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Enables Pages and sets the publish source to "GitHub Actions" on first
+      # run; idempotent thereafter, so no manual repo-settings step is needed.
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

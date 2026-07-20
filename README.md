@@ -13,7 +13,8 @@ npm install
 ## Usage
 
 ```bash
-npm run check      # format + lint + typecheck + test
+npm run check      # format + lint + typecheck + test + build
+npm run build      # render content/ + templates/ into _site/
 npm start          # run src/index.ts
 npm run format     # format with Prettier
 npm run lint       # lint (add :fix to autofix)
