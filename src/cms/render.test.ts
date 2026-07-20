@@ -60,6 +60,29 @@ test("passes prev/next neighbours to collection entries", () => {
   expect(byPath["blog/old"]).toBe("P:Hello");
 });
 
+test("a middle entry gets both prev and next neighbours", () => {
+  const three = buildSiteModel([
+    { path: "index.md", raw: "---\nsite:\n  title: T\n  baseUrl: /b\n---\n" },
+    { path: "blog/a.md", raw: "---\ntitle: A\ndate: 2026-01-03\n---\n" },
+    { path: "blog/b.md", raw: "---\ntitle: B\ndate: 2026-01-02\n---\n" },
+    { path: "blog/c.md", raw: "---\ntitle: C\ndate: 2026-01-01\n---\n" },
+  ]);
+  const byPath = Object.fromEntries(
+    renderSite(
+      three,
+      {
+        ...templates,
+        "blog.entry.html":
+          "{{#if prev}}P:{{ prev.title }}{{/if}}|{{#if next}}N:{{ next.title }}{{/if}}",
+      },
+      {},
+    ).map((f) => [f.path, f.html]),
+  );
+  expect(byPath["blog/a"]).toBe("|N:B"); // newest: next only
+  expect(byPath["blog/b"]).toBe("P:A|N:C"); // middle: both
+  expect(byPath["blog/c"]).toBe("P:B|"); // oldest: prev only
+});
+
 test("gives list and tag pages a title for the head partial", () => {
   const byPath = Object.fromEntries(
     renderSite(
