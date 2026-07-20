@@ -39,6 +39,20 @@ test("indexes tags per collection", () => {
   expect(tags.x!.map((e) => e.slug)).toEqual(["hello", "old"]);
 });
 
+test("orders same-day posts by slug regardless of input order", () => {
+  const raw = (t: string) => `---\ntitle: ${t}\ndate: 2026-01-05\n---\n`;
+  // Fed newest-slug-first to prove the tiebreak, not input order, decides.
+  const model = buildSiteModel([
+    { path: "index.md", raw: "---\nsite:\n  title: T\n  baseUrl: /b\n---\n" },
+    { path: "blog/zeta.md", raw: raw("Zeta") },
+    { path: "blog/alpha.md", raw: raw("Alpha") },
+  ]);
+  expect(model.collections.blog!.entries.map((e) => e.slug)).toEqual([
+    "alpha",
+    "zeta",
+  ]);
+});
+
 test("excludes draft entries from pages, collections, and tags", () => {
   const model = buildSiteModel([
     ...files,

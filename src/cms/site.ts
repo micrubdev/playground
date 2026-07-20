@@ -121,9 +121,11 @@ function normalizeBase(base: string): string {
 }
 
 function compareEntries(a: Entry, b: Entry): number {
-  if (a.date && b.date) return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
-  if (a.date) return -1;
-  if (b.date) return 1;
+  if (a.date && b.date && a.date !== b.date) return a.date < b.date ? 1 : -1;
+  if (a.date && !b.date) return -1;
+  if (b.date && !a.date) return 1;
+  // Same date, or both undated: order by slug so ties are deterministic and
+  // independent of filesystem readdir order (which isn't stable across hosts).
   return a.slug < b.slug ? -1 : 1;
 }
 
