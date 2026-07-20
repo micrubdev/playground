@@ -60,13 +60,16 @@ export function buildSiteModel(files: RawFile[]): SiteModel {
 
   const pages = files
     .filter((f) => f.path !== "index.md" && !f.path.includes("/"))
-    .map((f) => toEntry(f, "", baseUrl));
+    .map((f) => toEntry(f, "", baseUrl))
+    .filter(published);
 
   const collections = files
     .filter((f) => f.path.includes("/"))
     .reduce<Record<string, Collection>>((acc, f) => {
       const id = f.path.split("/")[0]!;
-      (acc[id] ??= { id, entries: [] }).entries.push(toEntry(f, id, baseUrl));
+      const entry = toEntry(f, id, baseUrl);
+      if (published(entry))
+        (acc[id] ??= { id, entries: [] }).entries.push(entry);
       return acc;
     }, {});
 
@@ -101,6 +104,11 @@ function toEntry(file: RawFile, collection: string, baseUrl: string): Entry {
     tags,
     bodyHtml: renderMarkdown(body, baseUrl),
   };
+}
+
+// Astro-style drafts: entries with `draft: true` in frontmatter never render.
+function published(entry: Entry): boolean {
+  return entry.data.draft !== true;
 }
 
 function basename(path: string): string {

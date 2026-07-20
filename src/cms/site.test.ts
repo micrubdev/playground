@@ -38,3 +38,20 @@ test("indexes tags per collection", () => {
   expect(Object.keys(tags)).toEqual(["x", "y"]);
   expect(tags.x!.map((e) => e.slug)).toEqual(["hello", "old"]);
 });
+
+test("excludes draft entries from pages, collections, and tags", () => {
+  const model = buildSiteModel([
+    ...files,
+    { path: "wip.md", raw: "---\ntitle: WIP\ndraft: true\n---\nsoon\n" },
+    {
+      path: "blog/draft.md",
+      raw: "---\ntitle: Draft\ndate: 2026-01-03\ntags: [x]\ndraft: true\n---\nnope\n",
+    },
+  ]);
+  expect(model.pages.map((p) => p.slug)).toEqual(["about"]);
+  expect(model.collections.blog!.entries.map((e) => e.slug)).toEqual([
+    "hello",
+    "old",
+  ]);
+  expect(model.tags.blog!.x!.map((e) => e.slug)).toEqual(["hello", "old"]);
+});
