@@ -31,9 +31,12 @@ jobs:
       - run: npm ci
       # _site/ is gitignored, so the pages lychee checks must be built first.
       - run: npm run build
+      # Pages link to the /playground deploy subpath (baseUrl); symlink it back
+      # to _site so lychee's --root-dir resolves those absolute links to files.
+      - run: ln -sfn . _site/playground
       - uses: lycheeverse/lychee-action@v2.9.0
         with:
-          args: --no-progress --verbose README.md CLAUDE.md "_site/**/*.html"
+          args: --no-progress --verbose --root-dir "${{ github.workspace }}/_site" README.md CLAUDE.md "_site/**/*.html"
           fail: true
         env:
           # Authenticates github.com requests so they are not rate limited.
