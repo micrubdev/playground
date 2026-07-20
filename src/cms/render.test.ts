@@ -43,6 +43,23 @@ test("throws when a required template is missing", () => {
   );
 });
 
+test("passes prev/next neighbours to collection entries", () => {
+  const byPath = Object.fromEntries(
+    renderSite(
+      model,
+      {
+        ...templates,
+        "blog.entry.html":
+          "{{#if prev}}P:{{ prev.title }}{{/if}}{{#if next}}N:{{ next.title }}{{/if}}",
+      },
+      {},
+    ).map((f) => [f.path, f.html]),
+  );
+  // Entries are newest-first: Hello (0) then Old (1).
+  expect(byPath["blog/hello"]).toBe("N:Old");
+  expect(byPath["blog/old"]).toBe("P:Hello");
+});
+
 test("gives list and tag pages a title for the head partial", () => {
   const byPath = Object.fromEntries(
     renderSite(

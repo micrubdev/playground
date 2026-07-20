@@ -12,6 +12,10 @@
         >
         {{/each}}
       </p>
+      <nav>
+        {{#if prev}}<a href="{{ prev.url }}">← {{ prev.title }}</a>{{/if}} {{#if
+        next}}<a href="{{ next.url }}">{{ next.title }} →</a>{{/if}}
+      </nav>
     </main>
   </body>
 </html>
