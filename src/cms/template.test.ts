@@ -47,3 +47,16 @@ test("iterates scalar arrays via this", () => {
     renderTemplate("{{#each tags}}#{{ this }} {{/each}}", { tags: ["a", "b"] }),
   ).toBe("#a #b ");
 });
+
+// Prettier reflows templates and can wrap a newline inside {{ }}, e.g. `{{#if\n
+// next}}`. The keyword must still be recognized across arbitrary whitespace.
+test("recognizes block tags split by newlines or extra spaces", () => {
+  expect(renderTemplate("{{#if\n  on}}Y{{else}}N{{/if}}", { on: false })).toBe(
+    "N",
+  );
+  expect(
+    renderTemplate("{{#each\n items}}{{ name }}{{/each}}", {
+      items: [{ name: "a" }],
+    }),
+  ).toBe("a");
+});

@@ -39,7 +39,9 @@ function tokenize(tpl: string): Token[] {
       tokens.push({ t: "var", path: m[1].trim(), raw: true });
       continue;
     }
-    const inner = (m[2] ?? "").trim();
+    // Collapse internal whitespace so a Prettier-reflowed `{{#if\n next}}` still
+    // matches the `#if ` keyword; paths never contain spaces, so this is safe.
+    const inner = (m[2] ?? "").trim().replace(/\s+/g, " ");
     if (inner.startsWith("#each "))
       tokens.push({ t: "open", kind: "each", path: inner.slice(6).trim() });
     else if (inner.startsWith("#if "))
