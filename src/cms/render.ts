@@ -43,9 +43,13 @@ function collectionOutputs(
   model: SiteModel,
   page: (name: string, ctx: Context) => string,
 ): OutputFile[] {
-  const entries = c.entries.map((e) => ({
+  const entries = c.entries.map((e, i) => ({
     path: `${c.id}/${e.slug}`,
-    html: page(`${c.id}.entry.html`, entryContext(model.site, e)),
+    html: page(`${c.id}.entry.html`, {
+      ...entryContext(model.site, e),
+      prev: neighbour(c.entries[i - 1]),
+      next: neighbour(c.entries[i + 1]),
+    }),
   }));
 
   const list: OutputFile = {
@@ -70,6 +74,12 @@ function collectionOutputs(
   );
 
   return [...entries, list, ...tagFiles];
+}
+
+// Newest-first order: prev is the newer post, next the older one. Undefined at
+// the ends so {{#if prev}} / {{#if next}} hide the links.
+function neighbour(entry: Entry | undefined): Context | undefined {
+  return entry ? { url: entry.url, title: entry.data.title } : undefined;
 }
 
 function entryContext(site: SiteMeta, entry: Entry): Context {
